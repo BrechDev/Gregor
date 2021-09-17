@@ -38,14 +38,15 @@ const geturl = async (message) => {
 //     })
 // }
 
-const doSomething = (message) => {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(message), 3000)
-    })
-}
+// const doSomething = (message) => {
+//     return new Promise(resolve => {
+//         setTimeout(() => resolve(message), 3000)
+//     })
+// }
 
 bot.on("ready", () => {
     console.log("Je suis connecté !")
+    bot.user.setActivity('!gregor', { type: 'LISTENING' })
 })
 
 bot.on("messageCreate", async function(message) {
@@ -57,12 +58,19 @@ bot.on("messageCreate", async function(message) {
     for (let i = 1; i < messageparser.length; i++) {
         console.log(i);
         songname = songname.concat(messageparser[i]);
-        songname = songname.concat(' ');
+        if (i != messageparser.length - 1) {
+            songname = songname.concat(' ');
+        }
     }
     console.log("songname:" + songname);
     if (messageparser[0] == "!gregor" && songname != "") {
         await geturl(songname);
+        if (finalurl == "https://youtube.com/watch?v=undefined") {
+            message.reply("Try with something more acurate")
+            return;
+        }
         message.reply(finalurl);
+        return;
     }
     if (messageparser[0] == "!gregor" && songname == "") {
         message.reply("Try !gregor <Song Name>");
