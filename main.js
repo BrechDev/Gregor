@@ -49,10 +49,26 @@ bot.on("ready", () => {
 })
 
 bot.on("messageCreate", async function(message) {
+    console.log(message);
     let messageparser = message.content.split(' ');
-    if (messageparser[0] == "!gregor" && messageparser[1] != "") {
-        await geturl(messageparser[1]);
+    let songname = "";
+    console.log(messageparser)
+    console.log(messageparser.length)
+    for (let i = 1; i < messageparser.length; i++) {
+        console.log(i);
+        songname = songname.concat(messageparser[i]);
+        songname = songname.concat(' ');
+    }
+    console.log("songname:" + songname);
+    if (messageparser[0] == "!gregor" && songname != "") {
+        await geturl(songname);
         message.reply(finalurl);
+    }
+    if (messageparser[0] == "!gregor" && songname == "") {
+        message.reply("Try !gregor <Song Name>");
+    }
+    if (messageparser[0] == "!gregorAuthor") {
+        message.reply("Mon createur est un bg sans nom")
     }
 })
 
