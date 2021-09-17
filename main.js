@@ -1,9 +1,11 @@
 require('dotenv').config()
 const request = require('request');
-const Discord = require('discord.js')
-const bot = new Discord.Client({ intents: ['GUILD_MESSAGES', 'DIRECT_MESSAGES','GUILDS']})
-const base_url= "https://www.googleapis.com/youtube/v3/search?part=snippet&q="
+const Discord = require('discord.js');
+const bot = new Discord.Client({ intents: ['GUILD_MESSAGES', 'DIRECT_MESSAGES','GUILDS']});
+const base_url= "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";
+const { joinVoiceChannel } = require('@discordjs/voice');
 let finalurl = "Freeze Rael";
+let chanel = null;
 
 const geturl = async (message) => {
     return new Promise(resolve => {
@@ -18,51 +20,20 @@ const geturl = async (message) => {
     });
 }
 
-// async function geturl (message) {
-//     let url = base_url + message.content + "&key=AIzaSyAfLaelZYy4HPjPlm9dU6c1IO86h0aLnwU&maxResults=1"
-//     request(url, { json: true }, (err, res, body) => {
-//         if (err) { return console.log(err); }
-//         console.log(body.items[0].id.videoId);
-//         finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
-//         return finalurl;
-//     })
-// }
-
-// const geturl = (message) => {
-//     let url = base_url + message.content + "&key=AIzaSyAfLaelZYy4HPjPlm9dU6c1IO86h0aLnwU&maxResults=1"
-//     request(url, { json: true }, (err, res, body) => {
-//         if (err) { return console.log(err); }
-//         console.log(body.items[0].id.videoId);
-//         finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
-//         return finalurl;
-//     })
-// }
-
-// const doSomething = (message) => {
-//     return new Promise(resolve => {
-//         setTimeout(() => resolve(message), 3000)
-//     })
-// }
-
 bot.on("ready", () => {
     console.log("Je suis connecté !")
     bot.user.setActivity('!gregor', { type: 'LISTENING' })
 })
 
 bot.on("messageCreate", async function(message) {
-    console.log(message);
     let messageparser = message.content.split(' ');
     let songname = "";
-    console.log(messageparser)
-    console.log(messageparser.length)
     for (let i = 1; i < messageparser.length; i++) {
-        console.log(i);
         songname = songname.concat(messageparser[i]);
         if (i != messageparser.length - 1) {
             songname = songname.concat(' ');
         }
     }
-    console.log("songname:" + songname);
     if (messageparser[0] == "!gregor" && songname != "") {
         await geturl(songname);
         if (finalurl == "https://youtube.com/watch?v=undefined") {
@@ -77,6 +48,28 @@ bot.on("messageCreate", async function(message) {
     }
     if (messageparser[0] == "!gregorAuthor") {
         message.reply("Mon createur est un bg sans nom")
+    }
+    if (messageparser[0] == "!gregorjoin") {
+        if (chanel != null) {
+            chanel.destroy();
+            chanel = null;
+        }
+        if (message.member.voice.channel == undefined) {
+            message.reply("Your not connected to any channel");
+            return;
+        }
+        console.log("connect to : " + message.member.voice.channel.name);
+        chanel = joinVoiceChannel({
+            channelId: message.member.voice.channel.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator
+        })
+    }
+    if (messageparser[0] == "!gregortej") {
+        if (chanel) {
+            chanel.destroy();
+            chanel = null;
+        }
     }
 })
 
