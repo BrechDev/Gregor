@@ -14,7 +14,8 @@ let player = createAudioPlayer();
 const geturl = async (message) => {
     return new Promise(resolve => {
         console.log("message:" + message);
-        if (message.substring(0, 32) == "https://www.youtube.com/watch?v=") {
+        console.log(message.substring(0, 8));
+        if (message.substring(0, 8) == "https://") {
             finalurl = message;
             console.log("pas de quota");
             resolve(finalurl);
@@ -25,6 +26,12 @@ const geturl = async (message) => {
         request(url, { json: true }, (err, res, body) => {
             console.log("100 quotas en moins");
             if (err) { return console.log(err); }
+            console.log(body);
+            if (body.error) { 
+                finalurl = null;
+                resolve(finalurl);
+                return;
+            }
             console.log(body.items[0].id.videoId);
             urlid = body.items[0].id.videoId;
             finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
@@ -59,6 +66,10 @@ bot.on("messageCreate", async function(message) {
     }
     if (messageparser[0] == "!gregor" && songname != "") {
         await geturl(songname);
+        if (finalurl == null) {
+            message.reply("No more API call today sorry, use link only please")
+            return;
+        }
         if (finalurl == "https://youtube.com/watch?v=undefined") {
             message.reply("Try with something more acurate")
             return;
