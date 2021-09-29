@@ -9,34 +9,61 @@ const ytdl = require("ytdl-core");
 let finalurl = "Freeze Rael";
 let urlid = "1";
 let chanel = null;
-let player = createAudioPlayer();
+let player = null;
+let map = [];
 
 const geturl = async (message) => {
     return new Promise(resolve => {
-        console.log("message:" + message);
-        console.log(message.substring(0, 8));
         if (message.substring(0, 8) == "https://") {
             finalurl = message;
-            console.log("pas de quota");
             resolve(finalurl);
             return;
         }
         let url = base_url + message + "&key=" + process.env.YOUTUBE_TOKEN + "&maxResults=1"
-        console.log(url);
         request(url, { json: true }, (err, res, body) => {
-            console.log("100 quotas en moins");
             if (err) { return console.log(err); }
-            console.log(body);
             if (body.error) { 
                 finalurl = null;
                 resolve(finalurl);
                 return;
             }
-            console.log(body.items[0].id.videoId);
             urlid = body.items[0].id.videoId;
             finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
             resolve(finalurl);
         })
+    });
+}
+
+const check_queu = async () => {
+    if (map.length == 0) {
+        if (chanel != null) {
+            chanel.destroy();
+            chanel = null;
+        }
+    } else {
+        let url = map[0]
+        map.shift();
+        play_music(url)
+        return;
+    }
+    return;
+}
+
+const play_music = async (finalurl) => {
+    let stream = ytdl(finalurl, {filter: 'audioonly'});
+    let res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
+    player = createAudioPlayer();
+    player.play(res);
+    if (chanel != null) {
+        chanel.subscribe(player);
+    }
+    player.on('error', (err) => {
+        console.log(err.message);
+    })
+    player.on(AudioPlayerStatus.Idle, () => {
+        console.log('Idle');
+        check_queu();
+        return;
     });
 }
 
@@ -54,15 +81,16 @@ bot.on("messageCreate", async function(message) {
             songname = songname.concat(' ');
         }
     }
-    console.log("https://www.youtube.com/watch?v=3k2J7eavWiM".substring(0, 28));
     if (messageparser[0] == "!gregore") {
         const stream = ytdl("https://youtube.com/watch?v=3k2J7eavWiM", {filter: 'audioonly'});
         const res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
 
         player.play(res);
-        chanel.subscribe(player);
+        if (chanel != null) {
+            chanel.subscribe(player);
+        }
 
-        player.on(AudioPlayerStatus.Idle, () => {chanel.destroy(); chanel = null;});
+        player.on(AudioPlayerStatus.Idle, () => {chanel.destroy();map = []; chanel = null;});
     }
     if (messageparser[0] == "!gregor" && songname != "") {
         await geturl(songname);
@@ -74,14 +102,14 @@ bot.on("messageCreate", async function(message) {
             message.reply("Try with something more acurate")
             return;
         }
-        message.reply(finalurl);
         if (message.member.voice.channel == undefined) {
             message.reply("Your not connected to any channel");
             return;
         }
         if (chanel != null) {
-            chanel.destroy();
-            chanel = null;
+            map.push(finalurl);
+            message.reply(map[0]);
+            return;
         } else {
             chanel = joinVoiceChannel({
                 channelId: message.member.voice.channel.id,
@@ -89,15 +117,9 @@ bot.on("messageCreate", async function(message) {
                 adapterCreator: message.guild.voiceAdapterCreator
             })
         }
+        message.reply(finalurl);
         console.log("connect to : " + message.member.voice.channel.name);
-        let stream = ytdl(finalurl, {filter: 'audioonly'});
-        let res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
-        let player = createAudioPlayer();
-
-        player.play(res);
-        chanel.subscribe(player);
-
-        player.on(AudioPlayerStatus.Idle, () => {chanel.destroy(); chanel = null;});
+        play_music(finalurl)
     }
     if (messageparser[0] == "!gregor" && songname == "") {
         message.reply("Try !gregor <Song Name>");
@@ -107,6 +129,7 @@ bot.on("messageCreate", async function(message) {
     }
     if (messageparser[0] == "!gregorjoin") {
         if (chanel != null) {
+            map = [];
             chanel.destroy();
             chanel = null;
         }
@@ -124,11 +147,31 @@ bot.on("messageCreate", async function(message) {
     if (messageparser[0] == "!gregortej") {
         if (chanel) {
             chanel.destroy();
+            map = [];
             chanel = null;
         }
     }
-    if (messageparser[0] == "!gregstop") {
+    if (messageparser[0] == "!gregorpause") {
+        console.log('Music get paused')
+        player.pause();
+    }
+    if (messageparser[0] == "!gregorplay") {
+        console.log('Music get Unpaused')
+        player.unpause();
+    }
+    if (messageparser[0] == "!gregorstop") {
+        console.log('Music get Stoped')
         player.stop();
+        if (chanel) {
+            chanel.destroy();
+            map = [];
+            chanel = null;
+        }
+    }
+    if (messageparser[0] == "!gregorskip") {
+        let url = map[0]
+        map.shift()
+        play_music(url)
     }
 })
 
