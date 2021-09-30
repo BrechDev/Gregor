@@ -7,7 +7,6 @@ const { joinVoiceChannel } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
 const ytdl = require("ytdl-core");
 let finalurl = "Freeze Rael";
-let urlid = "1";
 let chanel = null;
 let player = null;
 let map = [];
@@ -27,7 +26,6 @@ const geturl = async (message) => {
                 resolve(finalurl);
                 return;
             }
-            urlid = body.items[0].id.videoId;
             finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
             resolve(finalurl);
         })
@@ -61,7 +59,6 @@ const play_music = async (finalurl) => {
         console.log(err.message);
     })
     player.on(AudioPlayerStatus.Idle, () => {
-        console.log('Idle');
         check_queu();
         return;
     });
@@ -81,18 +78,11 @@ bot.on("messageCreate", async function(message) {
             songname = songname.concat(' ');
         }
     }
-    if (messageparser[0] == "!gregore") {
-        const stream = ytdl("https://youtube.com/watch?v=3k2J7eavWiM", {filter: 'audioonly'});
-        const res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
-
-        player.play(res);
-        if (chanel != null) {
-            chanel.subscribe(player);
-        }
-
-        player.on(AudioPlayerStatus.Idle, () => {chanel.destroy();map = []; chanel = null;});
-    }
     if (messageparser[0] == "!gregor" && songname != "") {
+        if (message.member.voice.channel == undefined) {
+            message.reply("Your not connected to any channel");
+            return;
+        }
         await geturl(songname);
         if (finalurl == null) {
             message.reply("No more API call today sorry, use link only please")
@@ -100,10 +90,6 @@ bot.on("messageCreate", async function(message) {
         }
         if (finalurl == "https://youtube.com/watch?v=undefined") {
             message.reply("Try with something more acurate")
-            return;
-        }
-        if (message.member.voice.channel == undefined) {
-            message.reply("Your not connected to any channel");
             return;
         }
         if (chanel != null) {
@@ -123,33 +109,6 @@ bot.on("messageCreate", async function(message) {
     }
     if (messageparser[0] == "!gregor" && songname == "") {
         message.reply("Try !gregor <Song Name>");
-    }
-    if (messageparser[0] == "!gregorAuthor") {
-        message.reply("Mon createur est un bg sans nom")
-    }
-    if (messageparser[0] == "!gregorjoin") {
-        if (chanel != null) {
-            map = [];
-            chanel.destroy();
-            chanel = null;
-        }
-        if (message.member.voice.channel == undefined) {
-            message.reply("Your not connected to any channel");
-            return;
-        }
-        console.log("connect to : " + message.member.voice.channel.name);
-        chanel = joinVoiceChannel({
-            channelId: message.member.voice.channel.id,
-            guildId: message.guild.id,
-            adapterCreator: message.guild.voiceAdapterCreator
-        })
-    }
-    if (messageparser[0] == "!gregortej") {
-        if (chanel) {
-            chanel.destroy();
-            map = [];
-            chanel = null;
-        }
     }
     if (messageparser[0] == "!gregorpause") {
         console.log('Music get paused')
