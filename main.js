@@ -1,7 +1,7 @@
 require('dotenv').config()
 const request = require('request');
 const Discord = require('discord.js');
-const bot = new Discord.Client({ intents: ['GUILD_MESSAGES', 'DIRECT_MESSAGES','GUILDS', 'GUILD_VOICE_STATES']});
+const bot = new Discord.Client({ intents: ['GUILD_MESSAGES', 'DIRECT_MESSAGES','GUILDS', 'GUILD_VOICE_STATES'] });
 const base_url= "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";
 const { joinVoiceChannel } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
@@ -9,7 +9,10 @@ const ytdl = require("ytdl-core");
 let finalurl = "Freeze Rael";
 let chanel = null;
 let player = null;
+let finalname = "";
+let name = [];
 let map = [];
+let loop = false;
 
 const geturl = async (message) => {
     return new Promise(resolve => {
@@ -23,31 +26,46 @@ const geturl = async (message) => {
             if (err) { return console.log(err); }
             if (body.error) { 
                 finalurl = null;
-                resolve(finalurl);
+                finalname = null;
+                resolve(finalurl, finalname);
                 return;
             }
+            finalname = body.items[0].snippet.title;
             finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
-            resolve(finalurl);
+            resolve(finalurl, finalname);
         })
     });
 }
 
-const check_queu = async () => {
+const check_queu = async (finalurl) => {
+    if (loop) {
+        let url = finalurl
+        play_music(url)
+        return;
+    }
     if (map.length == 0) {
         if (chanel != null) {
             chanel.destroy();
             chanel = null;
         }
+        loop = false
     } else {
-        let url = map[0]
+        let url = map[0];
         map.shift();
-        play_music(url)
+        name.shift();
+        play_music(url);
         return;
     }
     return;
 }
 
 const play_music = async (finalurl) => {
+    console.log(name);
+    if (name.length == 0) {
+        console.log("Playing: " + finalname);
+    } else {
+        console.log("Playing: " + name[0]);
+    }
     let stream = ytdl(finalurl, {filter: 'audioonly'});
     let res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
     player = createAudioPlayer();
@@ -59,14 +77,28 @@ const play_music = async (finalurl) => {
         console.log(err.message);
     })
     player.on(AudioPlayerStatus.Idle, () => {
-        check_queu();
+        check_queu(finalurl);
         return;
     });
 }
 
+bot.on("voiceStateUpdate", (oldState, newState) => {
+    console.log("teub")
+    if (oldState.channelId === null || typeof oldState.channelId == 'undefined') return;
+    if (newState.id !== bot.user.id) return;
+    loop = false;
+    if (chanel) {
+        chanel.destroy();
+        map = [];
+        name = [];
+        chanel = null;
+    }
+    console.log("ahahahaahahh")
+})
+
 bot.on("ready", () => {
     console.log("Je suis connecté !")
-    bot.user.setActivity('!gregor', { type: 'LISTENING' })
+    bot.user.setActivity('!gregor | !gregorhelp', { type: 'LISTENING' })
 })
 
 bot.on("messageCreate", async function(message) {
@@ -78,6 +110,18 @@ bot.on("messageCreate", async function(message) {
             songname = songname.concat(' ');
         }
     }
+    // 320486613090304000 The Blood FLow
+    // 356056142331379722 Brech
+    // 261787324201959424 Meusp
+    console.log(message)
+    if (messageparser[0] == "!gregorego") {
+        if (message.author.id == "320486613090304000") {
+            message.reply("Ce mec est bg et fait partie de l'équipe qui à terminé premier de la Grosse League qui plus est");
+        }
+        if (message.author.id == "356056142331379722") {
+            message.reply("Ce mec a crée ce bot mais quel génie de l'informatique");
+        }
+    }
     if (messageparser[0] == "!gregor" && songname != "") {
         if (message.member.voice.channel == undefined) {
             message.reply("Your not connected to any channel");
@@ -85,16 +129,17 @@ bot.on("messageCreate", async function(message) {
         }
         await geturl(songname);
         if (finalurl == null) {
-            message.reply("No more API call today sorry, use link only please")
+            message.reply("No more API call today sorry, use link only please");
             return;
         }
         if (finalurl == "https://youtube.com/watch?v=undefined") {
-            message.reply("Try with something more acurate")
+            message.reply("Try with something more acurate");
             return;
         }
         if (chanel != null) {
             map.push(finalurl);
-            message.reply(map[0]);
+            name.push(finalname);
+            message.reply("Music added to queue : " + map[map.length - 1]);
             return;
         } else {
             chanel = joinVoiceChannel({
@@ -105,32 +150,62 @@ bot.on("messageCreate", async function(message) {
         }
         message.reply(finalurl);
         console.log("connect to : " + message.member.voice.channel.name);
-        play_music(finalurl)
+        play_music(finalurl);
+    }
+    if (messageparser[0] == "viande") {
+        message.author.send("Ahahahhaha d'où t'écrit viande sans raison là, on est où wsh t'es con ou quoi ?");
+    }
+    if (messageparser[0] == "!gregorhelp") {
+        message.reply("Commands List  :\n!gregor title --> Play a song named 'title' with a link or key word\n!gregorstop --> Kick Gregor from the voice room\n!gregorskip --> Go to the next song or skip the current one\n!gregorego --> Command dedicated to the creator and contributors to flatter their egos\nviande --> Easter Egg (in DM)\n!gregorpause --> Pause the current playing music\n!gregorunpause --> Unpause the current playing music\n!gregorloop --> Replay indefinitely the current playing music\n!gregorhelp --> List all gregor's commands");
     }
     if (messageparser[0] == "!gregor" && songname == "") {
         message.reply("Try !gregor <Song Name>");
     }
     if (messageparser[0] == "!gregorpause") {
-        console.log('Music get paused')
+        console.log('Music get paused');
         player.pause();
     }
     if (messageparser[0] == "!gregorplay") {
-        console.log('Music get Unpaused')
+        console.log('Music get Unpaused');
         player.unpause();
     }
     if (messageparser[0] == "!gregorstop") {
-        console.log('Music get Stoped')
+        console.log('Music get Stoped');
         player.stop();
         if (chanel) {
             chanel.destroy();
             map = [];
+            name = [];
             chanel = null;
         }
+        loop = false
     }
     if (messageparser[0] == "!gregorskip") {
         let url = map[0]
         map.shift()
+        if (name.length == 1) {name.shift()}
         play_music(url)
+    }
+    if (messageparser[0] == "!gregorq") {
+        let mess = "";
+        for (let i = 0; i < map.length; i++) {
+            mess = mess.concat(map[i]);
+        }
+        if (mess == "") {
+            message.reply("No song in queue");
+            return;
+        }
+        message.reply(mess);
+        return;
+    }
+    if (messageparser[0] == "!gregorloop") {
+        if (chanel == null) {
+            message.reply("No music playing right now");
+            return;
+        }
+        loop = !loop;
+        message.reply("Loop is : " + (loop ? 'on' : 'off'));
+        return;
     }
 })
 
