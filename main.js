@@ -6,13 +6,17 @@ const base_url= "https://www.googleapis.com/youtube/v3/search?part=snippet&q=";
 const { joinVoiceChannel } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
 const ytdl = require("ytdl-core");
-let finalurl = "Freeze Rael";
+
+/////// GLOBAL VARIABLES///////
+let finalurl = "menace Santana";
 let chanel = null;
 let player = null;
 let finalname = "";
 let name = [];
 let map = [];
 let loop = false;
+let time = 0;
+let playing = false
 
 const geturl = async (message) => {
     return new Promise(resolve => {
@@ -22,7 +26,7 @@ const geturl = async (message) => {
             return;
         }
         let url = base_url + message + "&key=" + process.env.YOUTUBE_TOKEN + "&maxResults=1"
-        request(url, { json: true }, (err, res, body) => {
+        request(url, { json: true }, (err, body) => {
             if (err) { return console.log(err); }
             if (body.error) { 
                 finalurl = null;
@@ -39,15 +43,17 @@ const geturl = async (message) => {
 
 const check_queu = async (finalurl) => {
     if (loop) {
-        let url = finalurl
-        play_music(url)
+        play_music(finalurl)
         return;
     }
     if (map.length == 0) {
-        if (chanel != null) {
-            chanel.destroy();
-            chanel = null;
-        }
+        time = setTimeout(function() {
+            if (chanel != null) {
+                chanel.destroy();
+                chanel = null;
+            }
+            loop = false
+        }, 120 * 1000);
         loop = false
     } else {
         let url = map[0];
@@ -60,6 +66,8 @@ const check_queu = async (finalurl) => {
 }
 
 const play_music = async (finalurl) => {
+    playing = true;
+    clearTimeout(time);
     console.log(name);
     if (name.length == 0) {
         console.log("Playing: " + finalname);
@@ -74,19 +82,22 @@ const play_music = async (finalurl) => {
         chanel.subscribe(player);
     }
     player.on('error', (err) => {
+        playing = false;
         console.log(err.message);
     })
     player.on(AudioPlayerStatus.Idle, () => {
+        playing = false;
         check_queu(finalurl);
         return;
     });
 }
 
 bot.on("voiceStateUpdate", (oldState, newState) => {
-    console.log("teub")
     if (oldState.channelId === null || typeof oldState.channelId == 'undefined') return;
     if (newState.id !== bot.user.id) return;
     loop = false;
+    playing = false;
+    if (newState != oldState) return;
     if (chanel) {
         chanel.destroy();
         map = [];
@@ -113,7 +124,6 @@ bot.on("messageCreate", async function(message) {
     // 320486613090304000 The Blood FLow
     // 356056142331379722 Brech
     // 261787324201959424 Meusp
-    console.log(message)
     if (messageparser[0] == "!gregorego") {
         if (message.author.id == "320486613090304000") {
             message.reply("Ce mec est bg et fait partie de l'équipe qui à terminé premier de la Grosse League qui plus est");
@@ -121,6 +131,9 @@ bot.on("messageCreate", async function(message) {
         if (message.author.id == "356056142331379722") {
             message.reply("Ce mec a crée ce bot mais quel génie de l'informatique");
         }
+    }
+    if (messageparser[0] == "!gregot" || messageparser[0] == "!gregoe" || messageparser[0] == "!gregof" || messageparser[0] == "!gregote") {
+        message.reply("Ta grand-mère écrit mieux maintenant, c'est !gregor pas ta putain de dyslexie");
     }
     if (messageparser[0] == "!gregor" && songname != "") {
         if (message.member.voice.channel == undefined) {
@@ -136,7 +149,7 @@ bot.on("messageCreate", async function(message) {
             message.reply("Try with something more acurate");
             return;
         }
-        if (chanel != null) {
+        if (playing == true) {
             map.push(finalurl);
             name.push(finalname);
             message.reply("Music added to queue : " + map[map.length - 1]);
@@ -179,6 +192,11 @@ bot.on("messageCreate", async function(message) {
             chanel = null;
         }
         loop = false
+    }
+    if (messageparser[0] == "!gregoreset") {
+        loop = false;
+        map = [];
+        name = [];
     }
     if (messageparser[0] == "!gregorskip") {
         let url = map[0]
