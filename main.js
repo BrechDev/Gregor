@@ -8,15 +8,17 @@ const { createAudioPlayer, createAudioResource, StreamType, AudioPlayerStatus } 
 const ytdl = require("ytdl-core");
 
 /////// GLOBAL VARIABLES///////
-let finalurl = "menace Santana";
+let finalurl = "";
 let chanel = null;
 let player = null;
 let finalname = "";
+let channelname = "";
 let name = [];
 let map = [];
 let loop = false;
 let time = 0;
-let playing = false
+let playing = false;
+//////////////////////////////
 
 const geturl = async (message) => {
     return new Promise(resolve => {
@@ -31,12 +33,14 @@ const geturl = async (message) => {
             if (body.error) { 
                 finalurl = null;
                 finalname = null;
-                resolve(finalurl, finalname);
+                channelname = null;
+                resolve(finalurl, finalname, channelname);
                 return;
             }
-            finalname = body.items[0].snippet.title;
-            finalurl = "https://youtube.com/watch?v=".concat(body.items[0].id.videoId);
-            resolve(finalurl, finalname);
+            finalname = body.body.items[0].snippet.title;
+            channelname = body.body.items[0].snippet.channelTitle;
+            finalurl = "https://youtube.com/watch?v=".concat(body.body.items[0].id.videoId);
+            resolve(finalurl, finalname, channelname);
         })
     });
 }
@@ -51,9 +55,12 @@ const check_queu = async (finalurl) => {
             if (chanel != null) {
                 chanel.destroy();
                 chanel = null;
+                map = [];
+                name = [];
             }
             loop = false
         }, 120 * 1000);
+        map = []
         loop = false
     } else {
         let url = map[0];
@@ -68,12 +75,10 @@ const check_queu = async (finalurl) => {
 const play_music = async (finalurl) => {
     playing = true;
     clearTimeout(time);
-    console.log(name);
-    if (name.length == 0) {
+    if (name.length == 0)
         console.log("Playing: " + finalname);
-    } else {
+    else
         console.log("Playing: " + name[0]);
-    }
     let stream = ytdl(finalurl, {filter: 'audioonly'});
     let res = createAudioResource(stream, {inputType: StreamType.Arbitrary});
     player = createAudioPlayer();
@@ -96,7 +101,6 @@ bot.on("voiceStateUpdate", (oldState, newState) => {
     if (oldState.channelId === null || typeof oldState.channelId == 'undefined') return;
     if (newState.id !== bot.user.id) return;
     loop = false;
-    playing = false;
     if (newState != oldState) return;
     if (chanel) {
         chanel.destroy();
@@ -104,7 +108,6 @@ bot.on("voiceStateUpdate", (oldState, newState) => {
         name = [];
         chanel = null;
     }
-    console.log("ahahahaahahh")
 })
 
 bot.on("ready", () => {
@@ -121,19 +124,24 @@ bot.on("messageCreate", async function(message) {
             songname = songname.concat(' ');
         }
     }
-    // 320486613090304000 The Blood FLow
-    // 356056142331379722 Brech
-    // 261787324201959424 Meusp
     if (messageparser[0] == "!gregorego") {
         if (message.author.id == "320486613090304000") {
-            message.reply("Ce mec est bg et fait partie de l'équipe qui à terminé premier de la Grosse League qui plus est");
+            message.reply("Ce mec patisse super bien c'est réel ! (et il est diamant sur LOL, dinguerie)");
         }
         if (message.author.id == "356056142331379722") {
             message.reply("Ce mec a crée ce bot mais quel génie de l'informatique");
         }
     }
+    if (messageparser[0] == "!gregordepress") {
+        if (message.author.id == "320486613090304000") {
+            message.reply("13031707");
+        }
+        if (message.author.id == "356056142331379722") {
+            message.reply("Ce mec pense être un génie de l'informatique mdr alors qu'il a juste créé un bot miteux sur Discord ... DISCORD MDR sort de chez toi non ? Rencontre des vrais gens vas sur Instagram, snap. Des vrais réseaux sociaux bouffon associable + ratio + flop");
+        }
+    }
     if (messageparser[0] == "!gregot" || messageparser[0] == "!gregoe" || messageparser[0] == "!gregof" || messageparser[0] == "!gregote") {
-        message.reply("Ta grand-mère écrit mieux maintenant, c'est !gregor pas ta putain de dyslexie");
+        message.reply("Ta grand-mère écrit mieux maintenant, c'est !gregor pas ta putain de dyslexie + ratio");
     }
     if (messageparser[0] == "!gregor" && songname != "") {
         if (message.member.voice.channel == undefined) {
@@ -165,8 +173,25 @@ bot.on("messageCreate", async function(message) {
         console.log("connect to : " + message.member.voice.channel.name);
         play_music(finalurl);
     }
+    if (messageparser[0] == "!gregoreplay") {
+        if (playing == true) {
+            message.reply("Currently playing " + finalname + " from " + channelname);
+        } else {
+            play_music(finalurl);
+        }
+    }
+    if (messageparser[0] == "!gregortitle") {
+        message.reply("Currently playing " + finalname + " from " + channelname);
+    }
     if (messageparser[0] == "viande") {
-        message.author.send("Ahahahhaha d'où t'écrit viande sans raison là, on est où wsh t'es con ou quoi ?");
+        message.author.send("Ahahahhaha d'où t'écrit viande sans raison là, on est où wsh t'es con ou quoi ? + ratio");
+    }
+    if (messageparser[0] == "ratio") {
+        message.react("🇷");
+        message.react("🇦");
+        message.react("🇹");
+        message.react("🇮");
+        message.react("🇴");
     }
     if (messageparser[0] == "!gregorhelp") {
         message.reply("Commands List  :\n!gregor title --> Play a song named 'title' with a link or key word\n!gregorstop --> Kick Gregor from the voice room\n!gregorskip --> Go to the next song or skip the current one\n!gregorego --> Command dedicated to the creator and contributors to flatter their egos\nviande --> Easter Egg (in DM)\n!gregorpause --> Pause the current playing music\n!gregorunpause --> Unpause the current playing music\n!gregorloop --> Replay indefinitely the current playing music\n!gregorhelp --> List all gregor's commands");
@@ -189,6 +214,7 @@ bot.on("messageCreate", async function(message) {
             chanel.destroy();
             map = [];
             name = [];
+            playing = false
             chanel = null;
         }
         loop = false
@@ -204,18 +230,25 @@ bot.on("messageCreate", async function(message) {
         if (name.length == 1) {name.shift()}
         play_music(url)
     }
-    if (messageparser[0] == "!gregorq") {
-        let mess = "";
-        for (let i = 0; i < map.length; i++) {
-            mess = mess.concat(map[i]);
+    if (messageparser[0] == "!gregorinfo") {
+        const channel = message.client.channels.cache.get(message.channelId)
+        const embeed = new Discord.MessageEmbed().setColor('#0099FF').setTitle("Les bouffons").setDescription("How can i be homophobic, my bitch is gay").setImage("https://media-exp1.licdn.com/dms/image/C4D03AQG-t8lhrz0lXw/profile-displayphoto-shrink_200_200/0/1610657017248?e=1659571200&v=beta&t=MIWvJlMgkrjbrZTcmRKv0a8NU0sGysFSxsjIo_fK-1c")
+        if (channel) {
+            channel.send({ embeds: [embeed] });
         }
-        if (mess == "") {
-            message.reply("No song in queue");
-            return;
-        }
-        message.reply(mess);
-        return;
     }
+    // if (messageparser[0] == "!gregorq") {
+    //     let mess = "";
+    //     for (let i = 0; i < map.length; i++) {
+    //         mess = mess.concat(map[i]);
+    //     }
+    //     if (mess == "") {
+    //         message.reply("No song in queue");
+    //         return;
+    //     }
+    //     message.reply(mess);
+    //     return;
+    // }
     if (messageparser[0] == "!gregorloop") {
         if (chanel == null) {
             message.reply("No music playing right now");
