@@ -1,10 +1,10 @@
 {
   "name": "gregor",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Discord Bot to play music in voice chanel",
-  "main": "index.js",
+  "main": "main.js",
   "engines": {
-    "node": "16.x"
+    "node": "19.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,23 +15,23 @@
     "url": "git+https://github.com/BrechDev/Gregor.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Clément Monteiro",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/BrechDev/Gregor/issues"
   },
   "homepage": "https://github.com/BrechDev/Gregor#readme",
   "dependencies": {
-    "@discordjs/opus": "^0.5.3",
-    "@discordjs/voice": "^0.6.0",
-    "@ytdl/ytdl": "^1.4.16",
+    "@discordjs/voice": "^0.15.0",
     "axios": "^0.21.4",
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "fetch": "^1.1.0",
-    "ffmpeg-static": "^4.4.0",
+    "ffmpeg": "^0.0.4",
+    "ffmpeg-static": "^5.1.0",
     "fs": "^0.0.1-security",
     "googleapis": "^87.0.0",
+    "libsodium-wrappers": "^0.7.11",
     "path": "^0.12.7",
     "request": "^2.88.2",
     "ytdl-core": "^4.9.2"
